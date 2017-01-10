@@ -27,7 +27,16 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -86,15 +95,11 @@ public class Utils extends io.vertx.core.impl.Utils {
   /**
    * Processes a escape sequence in path
    *
-   * @param path
-   *          The original path
-   * @param result
-   *          The result of unescaping the escape sequence (and removing dangerous constructs)
-   * @param i
-   *          The index of path where the escape sequence begins
+   * @param path   The original path
+   * @param result The result of unescaping the escape sequence (and removing dangerous constructs)
+   * @param i      The index of path where the escape sequence begins
    * @return The index of path where the escape sequence ends
-   * @throws UnsupportedEncodingException
-   *           If the escape sequence does not represent a valid UTF-8 string
+   * @throws UnsupportedEncodingException If the escape sequence does not represent a valid UTF-8 string
    */
   private static int processEscapeSequence(String path, StringBuilder result, int i) throws UnsupportedEncodingException {
     Buffer buf = Buffer.buffer(2);
@@ -220,6 +225,18 @@ public class Utils extends io.vertx.core.impl.Utils {
       }
     }
     return prefixLen != 0 ? path.substring(prefixLen) : path;
+  }
+
+  public static <V> V getAndWrapException(Callable<V> op, Function<Exception, RuntimeException> wrapper) {
+    Objects.requireNonNull(op);
+    Objects.requireNonNull(wrapper);
+    V result;
+    try {
+      result = op.call();
+    } catch (Exception e) {
+      throw wrapper.apply(e);
+    }
+    return result;
   }
 
   private static final Comparator<String> ACCEPT_X_COMPARATOR = new Comparator<String>() {

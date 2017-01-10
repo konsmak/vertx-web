@@ -43,6 +43,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
+import io.vertx.ext.web.impl.Utils;
 
 import static io.vertx.core.buffer.Buffer.buffer;
 
@@ -99,7 +100,10 @@ class HtmlFileTransport extends BaseTransport {
       HttpServerRequest req = rc.request();
       String sessionID = req.params().get("param0");
       SockJSSession session = getSession(rc, options.getSessionTimeout(), options.getHeartbeatInterval(), sessionID, sockHandler);
-      session.setInfo(req.localAddress(), req.remoteAddress(), req.uri(), req.headers());
+      session.setInfo(
+        req.localAddress(), req.remoteAddress(), req.uri(), req.headers(),
+        Utils.getAndWrapException(req::peerCertificateChain, RuntimeException::new)
+      );
       session.register(new HtmlFileListener(options.getMaxBytesStreaming(), rc, callback, session));
     });
   }

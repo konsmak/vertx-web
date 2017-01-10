@@ -40,10 +40,13 @@ import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.net.SocketAddress;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
-import io.vertx.ext.auth.User;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.security.cert.X509Certificate;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -136,6 +139,11 @@ class RawWebSocketTransport {
     @Override
     public String uri() {
       return ws.uri();
+    }
+
+    @Override
+    public X509Certificate[] peerCertificateChain() throws SSLPeerUnverifiedException {
+      return ws.peerCertificateChain();
     }
   }
 

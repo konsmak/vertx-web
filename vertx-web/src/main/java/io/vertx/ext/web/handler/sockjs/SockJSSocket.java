@@ -32,6 +32,7 @@
 
 package io.vertx.ext.web.handler.sockjs;
 
+import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.codegen.annotations.Nullable;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.Handler;
@@ -40,11 +41,13 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.core.streams.WriteStream;
-import io.vertx.ext.web.Session;
 import io.vertx.ext.auth.User;
+import io.vertx.ext.web.Session;
+
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.security.cert.X509Certificate;
 
 /**
- *
  * You interact with SockJS clients through instances of SockJS socket.
  * <p>
  * The API is very similar to {@link io.vertx.core.http.WebSocket}.
@@ -130,8 +133,16 @@ public interface SockJSSocket extends ReadStream<Buffer>, WriteStream<Buffer> {
   Session webSession();
 
   /**
-   *  @return the Vert.x-Web user corresponding to this socket
+   * @return the Vert.x-Web user corresponding to this socket
    */
   @Nullable
   User webUser();
+
+  /**
+   * @return an array of the peer certificates.  Returns null if connection is not SSL.
+   * @throws SSLPeerUnverifiedException SSL peer's identity has not been verified.
+   */
+  @GenIgnore
+  X509Certificate[] peerCertificateChain() throws SSLPeerUnverifiedException;
+
 }

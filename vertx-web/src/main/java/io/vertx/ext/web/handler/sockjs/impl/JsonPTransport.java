@@ -43,6 +43,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
+import io.vertx.ext.web.impl.Utils;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -72,7 +73,10 @@ class JsonPTransport extends BaseTransport {
       HttpServerRequest req = rc.request();
       String sessionID = req.params().get("param0");
       SockJSSession session = getSession(rc, options.getSessionTimeout(), options.getHeartbeatInterval(), sessionID, sockHandler);
-      session.setInfo(req.localAddress(), req.remoteAddress(), req.uri(), req.headers());
+      session.setInfo(
+        req.localAddress(), req.remoteAddress(), req.uri(), req.headers(),
+        Utils.getAndWrapException(req::peerCertificateChain, RuntimeException::new)
+      );
       session.register(new JsonPListener(rc, session, callback));
     });
 

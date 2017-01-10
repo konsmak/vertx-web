@@ -45,14 +45,15 @@ import io.vertx.core.shareddata.Shareable;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
 
+import javax.security.cert.X509Certificate;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import static io.vertx.core.buffer.Buffer.buffer;
+import static io.vertx.core.buffer.Buffer.*;
 
 /**
  * The SockJS session implementation.
- *
+ * <p>
  * If multiple instances of the SockJS server are used then instances of this
  * class can be accessed by different threads (not concurrently), so we store
  * it in a shared data map
@@ -85,6 +86,7 @@ class SockJSSession extends SockJSSocketBase implements Shareable {
   private SocketAddress remoteAddress;
   private String uri;
   private MultiMap headers;
+  private X509Certificate[] peerCertificateChain;
 
   SockJSSession(Vertx vertx, LocalMap<String, SockJSSession> sessions, RoutingContext rc, long heartbeatInterval,
                 Handler<SockJSSocket> sockHandler) {
@@ -135,7 +137,7 @@ class SockJSSession extends SockJSSocketBase implements Shareable {
   public synchronized SockJSSession resume() {
     paused = false;
     if (dataHandler != null) {
-      for (String msg: this.pendingReads) {
+      for (String msg : this.pendingReads) {
         dataHandler.handle(buffer(msg));
       }
     }
@@ -210,6 +212,11 @@ class SockJSSession extends SockJSSocketBase implements Shareable {
   @Override
   public String uri() {
     return uri;
+  }
+
+  @Override
+  public X509Certificate[] peerCertificateChain() {
+    return peerCertificateChain;
   }
 
   synchronized boolean isClosed() {
@@ -321,11 +328,11 @@ class SockJSSession extends SockJSSocketBase implements Shareable {
       String[] parts;
       if (msgs.startsWith("[")) {
         //JSON array
-        parts = (String[])JsonCodec.decodeValue(msgs, String[].class);
+        parts = (String[]) JsonCodec.decodeValue(msgs, String[].class);
       } else {
         //JSON string
-        String str = (String)JsonCodec.decodeValue(msgs, String.class);
-        parts = new String[] { str };
+        String str = (String) JsonCodec.decodeValue(msgs, String.class);
+        parts = new String[]{str};
       }
       return parts;
     } catch (DecodeException e) {
@@ -383,10 +390,11 @@ class SockJSSession extends SockJSSocketBase implements Shareable {
   }
 
   void setInfo(SocketAddress localAddress, SocketAddress remoteAddress, String uri,
-               MultiMap headers) {
+               MultiMap headers, X509Certificate[] peerCertificateChain) {
     this.localAddress = localAddress;
     this.remoteAddress = remoteAddress;
     this.uri = uri;
     this.headers = BaseTransport.removeCookieHeaders(headers);
+    this.peerCertificateChain = peerCertificateChain;
   }
 }

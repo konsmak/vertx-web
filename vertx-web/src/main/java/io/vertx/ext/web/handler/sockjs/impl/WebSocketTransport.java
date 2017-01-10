@@ -43,6 +43,7 @@ import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSSocket;
+import io.vertx.ext.web.impl.Utils;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -68,7 +69,10 @@ class WebSocketTransport extends BaseTransport {
         ServerWebSocket ws = rc.request().upgrade();
         if (log.isTraceEnabled()) log.trace("WS, handler");
         SockJSSession session = new SockJSSession(vertx, sessions, rc, options.getHeartbeatInterval(), sockHandler);
-        session.setInfo(ws.localAddress(), ws.remoteAddress(), ws.uri(), ws.headers());
+        session.setInfo(
+          ws.localAddress(), ws.remoteAddress(), ws.uri(), ws.headers(),
+          Utils.getAndWrapException(ws::peerCertificateChain, RuntimeException::new)
+        );
         session.register(new WebSocketListener(ws, session));
       }
     });
